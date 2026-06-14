@@ -1,0 +1,396 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  .calc-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 560px;
+    padding: 2rem 1rem;
+    background: #0a0a1a;
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,200,0.03) 2px, rgba(0,255,200,0.03) 4px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .calc-body {
+    position: relative;
+    z-index: 1;
+    width: 320px;
+    border: 2px solid #00ffe0;
+    border-radius: 20px;
+    padding: 20px;
+    background: #0d0d2b;
+    box-shadow: 0 0 24px rgba(0,255,224,0.25), 0 0 60px rgba(0,255,224,0.08), inset 0 0 20px rgba(0,255,224,0.04);
+  }
+
+  .calc-header {
+    text-align: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #00ffe0;
+    margin-bottom: 14px;
+    opacity: 0.7;
+  }
+
+  .display-wrap {
+    background: #050515;
+    border: 1.5px solid #00ffe0;
+    border-radius: 10px;
+    padding: 12px 16px 10px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .display-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,255,224,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .expr-line {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: #4a8fcf;
+    min-height: 18px;
+    text-align: right;
+    letter-spacing: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .main-display {
+    font-family: 'Orbitron', monospace;
+    font-size: 34px;
+    font-weight: 700;
+    color: #00ffe0;
+    text-align: right;
+    letter-spacing: 2px;
+    line-height: 1.1;
+    min-height: 44px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-shadow: 0 0 8px rgba(0,255,224,0.4);
+  }
+
+  .main-display.error { color: #ff4d6d; text-shadow: 0 0 8px rgba(255,77,109,0.4); font-size: 20px; }
+
+  .btn-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    height: 58px;
+    cursor: pointer;
+    transition: transform 0.08s, box-shadow 0.08s, background 0.1s;
+    position: relative;
+    overflow: hidden;
+    outline: none;
+    letter-spacing: 1px;
+  }
+
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.05);
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+
+  .btn:active { transform: scale(0.93); }
+  .btn:active::after { opacity: 1; }
+
+  .btn-num {
+    background: #131336;
+    color: #c8e6ff;
+    border: 1.5px solid #1e2060;
+  }
+  .btn-num:hover { background: #1a1a48; border-color: #00ffe0; box-shadow: 0 0 10px rgba(0,255,224,0.2); }
+
+  .btn-op {
+    background: #1a003a;
+    color: #bf80ff;
+    border: 1.5px solid #6600cc;
+  }
+  .btn-op:hover { background: #2a0055; border-color: #bf80ff; box-shadow: 0 0 10px rgba(191,128,255,0.3); }
+
+  .btn-eq {
+    background: #003a28;
+    color: #00ffe0;
+    border: 1.5px solid #00cc88;
+    grid-column: span 2;
+  }
+  .btn-eq:hover { background: #005540; border-color: #00ffe0; box-shadow: 0 0 14px rgba(0,255,224,0.35); }
+
+  .btn-clear {
+    background: #3a0012;
+    color: #ff4d6d;
+    border: 1.5px solid #880030;
+  }
+  .btn-clear:hover { background: #550020; border-color: #ff4d6d; box-shadow: 0 0 10px rgba(255,77,109,0.3); }
+
+  .btn-del {
+    background: #2a1a00;
+    color: #ffaa00;
+    border: 1.5px solid #884400;
+  }
+  .btn-del:hover { background: #3d2500; border-color: #ffaa00; box-shadow: 0 0 10px rgba(255,170,0,0.3); }
+
+  .btn-mod {
+    background: #001a3a;
+    color: #44aaff;
+    border: 1.5px solid #004488;
+  }
+  .btn-mod:hover { background: #00254d; border-color: #44aaff; box-shadow: 0 0 10px rgba(68,170,255,0.3); }
+
+  .btn-sign {
+    background: #001a1a;
+    color: #00e0e0;
+    border: 1.5px solid #006666;
+  }
+  .btn-sign:hover { background: #002828; border-color: #00e0e0; box-shadow: 0 0 10px rgba(0,224,224,0.3); }
+
+  .btn-dot { background: #131336; color: #c8e6ff; border: 1.5px solid #1e2060; }
+  .btn-dot:hover { background: #1a1a48; border-color: #00ffe0; box-shadow: 0 0 10px rgba(0,255,224,0.2); }
+
+  .fidget-row {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  .fidget-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fidget-btn:active { transform: scale(0.85) rotate(30deg); }
+
+  .fidget-a { background: #ff4d6d; box-shadow: 0 0 8px rgba(255,77,109,0.4); }
+  .fidget-b { background: #bf80ff; box-shadow: 0 0 8px rgba(191,128,255,0.4); }
+  .fidget-c { background: #00ffe0; box-shadow: 0 0 8px rgba(0,255,224,0.4); }
+  .fidget-d { background: #ffaa00; box-shadow: 0 0 8px rgba(255,170,0,0.4); }
+
+  .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10;
+    animation: burst 0.6s forwards;
+  }
+
+  @keyframes burst {
+    0% { opacity: 1; transform: scale(1) translate(0,0); }
+    100% { opacity: 0; transform: scale(0.2) translate(var(--tx), var(--ty)); }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 24px rgba(0,255,224,0.25), 0 0 60px rgba(0,255,224,0.08), inset 0 0 20px rgba(0,255,224,0.04); }
+    50% { box-shadow: 0 0 32px rgba(0,255,224,0.4), 0 0 80px rgba(0,255,224,0.15), inset 0 0 24px rgba(0,255,224,0.08); }
+  }
+
+  .pulse { animation: pulseGlow 2.5s ease-in-out infinite; }
+</style>
+
+<div class="calc-wrapper" id="wrapper">
+  <div class="scanlines"></div>
+  <div class="calc-body pulse" id="calcBody">
+    <div class="calc-header">◈ CALC-X9000 ◈</div>
+
+    <div class="display-wrap">
+      <div class="expr-line" id="exprLine">&nbsp;</div>
+      <div class="main-display" id="mainDisplay">0</div>
+    </div>
+
+    <div class="btn-grid" id="btnGrid">
+      <button class="btn btn-clear" data-action="clear">AC</button>
+      <button class="btn btn-sign" data-action="sign">+/−</button>
+      <button class="btn btn-mod" data-action="percent">%</button>
+      <button class="btn btn-op" data-action="op" data-op="÷">÷</button>
+
+      <button class="btn btn-num" data-action="num" data-val="7">7</button>
+      <button class="btn btn-num" data-action="num" data-val="8">8</button>
+      <button class="btn btn-num" data-action="num" data-val="9">9</button>
+      <button class="btn btn-op" data-action="op" data-op="×">×</button>
+
+      <button class="btn btn-num" data-action="num" data-val="4">4</button>
+      <button class="btn btn-num" data-action="num" data-val="5">5</button>
+      <button class="btn btn-num" data-action="num" data-val="6">6</button>
+      <button class="btn btn-op" data-action="op" data-op="−">−</button>
+
+      <button class="btn btn-num" data-action="num" data-val="1">1</button>
+      <button class="btn btn-num" data-action="num" data-val="2">2</button>
+      <button class="btn btn-num" data-action="num" data-val="3">3</button>
+      <button class="btn btn-op" data-action="op" data-op="+">+</button>
+
+      <button class="btn btn-del" data-action="del">⌫</button>
+      <button class="btn btn-num" data-action="num" data-val="0">0</button>
+      <button class="btn btn-dot" data-action="dot">.</button>
+      <button class="btn btn-eq" data-action="equals">=</button>
+    </div>
+
+    <div class="fidget-row">
+      <button class="fidget-btn fidget-a" title="Fidget!" onclick="spawnParticles(this,'#ff4d6d')"></button>
+      <button class="fidget-btn fidget-b" title="Fidget!" onclick="spawnParticles(this,'#bf80ff')"></button>
+      <button class="fidget-btn fidget-c" title="Fidget!" onclick="spawnParticles(this,'#00ffe0')"></button>
+      <button class="fidget-btn fidget-d" title="Fidget!" onclick="spawnParticles(this,'#ffaa00')"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const display = document.getElementById('mainDisplay');
+const expr = document.getElementById('exprLine');
+const grid = document.getElementById('btnGrid');
+const wrapper = document.getElementById('wrapper');
+
+let current = '0';
+let stored = null;
+let op = null;
+let justEvaled = false;
+
+function fmt(n) {
+  let s = parseFloat(parseFloat(n).toPrecision(10)).toString();
+  if (s.length > 12) s = parseFloat(n).toExponential(4);
+  return s;
+}
+
+function updateDisplay(val, isErr) {
+  display.textContent = isErr ? val : fmt(val);
+  display.className = 'main-display' + (isErr ? ' error' : '');
+}
+
+function setExpr(txt) { expr.textContent = txt || '\u00a0'; }
+
+grid.addEventListener('click', function(e) {
+  const btn = e.target.closest('.btn');
+  if (!btn) return;
+  const action = btn.dataset.action;
+
+  if (action === 'num') {
+    const v = btn.dataset.val;
+    if (justEvaled) { current = v; justEvaled = false; }
+    else current = (current === '0') ? v : current + v;
+    if (current.length > 12) return;
+    updateDisplay(current);
+
+  } else if (action === 'dot') {
+    if (justEvaled) { current = '0.'; justEvaled = false; }
+    else if (!current.includes('.')) current += '.';
+    display.textContent = current;
+    display.className = 'main-display';
+
+  } else if (action === 'op') {
+    const o = btn.dataset.op;
+    if (stored !== null && op && !justEvaled) {
+      const res = calc(parseFloat(stored), parseFloat(current), op);
+      if (res === null) { updateDisplay('ERROR', true); setExpr(''); stored = null; op = null; return; }
+      stored = res.toString();
+      updateDisplay(stored);
+    } else {
+      stored = current;
+    }
+    op = o;
+    justEvaled = false;
+    setExpr(fmt(stored) + ' ' + op);
+    current = '0';
+
+  } else if (action === 'equals') {
+    if (stored === null || op === null) return;
+    const res = calc(parseFloat(stored), parseFloat(current), op);
+    setExpr(fmt(stored) + ' ' + op + ' ' + fmt(current) + ' =');
+    if (res === null) { updateDisplay('ERROR', true); stored = null; op = null; }
+    else { current = res.toString(); updateDisplay(current); stored = null; op = null; justEvaled = true; }
+
+  } else if (action === 'clear') {
+    current = '0'; stored = null; op = null; justEvaled = false;
+    updateDisplay('0'); setExpr('');
+
+  } else if (action === 'del') {
+    if (justEvaled) return;
+    current = current.length > 1 ? current.slice(0, -1) : '0';
+    updateDisplay(current);
+
+  } else if (action === 'sign') {
+    current = (parseFloat(current) * -1).toString();
+    updateDisplay(current);
+
+  } else if (action === 'percent') {
+    current = (parseFloat(current) / 100).toString();
+    updateDisplay(current);
+  }
+});
+
+function calc(a, b, operator) {
+  let res;
+  if (operator === '+') res = a + b;
+  else if (operator === '−') res = a - b;
+  else if (operator === '×') res = a * b;
+  else if (operator === '÷') { if (b === 0) return null; res = a / b; }
+  return parseFloat(res.toPrecision(10));
+}
+
+document.addEventListener('keydown', function(e) {
+  const map = {'0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9'};
+  if (map[e.key] !== undefined) { grid.querySelector(`[data-val="${e.key}"]`).click(); }
+  else if (e.key === '+') grid.querySelector('[data-op="+"]').click();
+  else if (e.key === '-') grid.querySelector('[data-op="−"]').click();
+  else if (e.key === '*') grid.querySelector('[data-op="×"]').click();
+  else if (e.key === '/') { e.preventDefault(); grid.querySelector('[data-op="÷"]').click(); }
+  else if (e.key === 'Enter' || e.key === '=') grid.querySelector('[data-action="equals"]').click();
+  else if (e.key === 'Backspace') grid.querySelector('[data-action="del"]').click();
+  else if (e.key === 'Escape') grid.querySelector('[data-action="clear"]').click();
+  else if (e.key === '.') grid.querySelector('[data-action="dot"]').click();
+});
+
+function spawnParticles(el, color) {
+  const rect = el.getBoundingClientRect();
+  const wrapRect = wrapper.getBoundingClientRect();
+  const cx = rect.left - wrapRect.left + rect.width / 2;
+  const cy = rect.top - wrapRect.top + rect.height / 2;
+  for (let i = 0; i < 10; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = (Math.PI * 2 * i) / 10;
+    const dist = 30 + Math.random() * 30;
+    p.style.cssText = `left:${cx}px;top:${cy}px;background:${color};--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;`;
+    wrapper.appendChild(p);
+    setTimeout(() => p.remove(), 650);
+  }
+}
+</script>
